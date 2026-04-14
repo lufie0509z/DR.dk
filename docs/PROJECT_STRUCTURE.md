@@ -2,7 +2,7 @@
 
 ## Goal
 
-Read DR news every day, identify the most important stories, summarize them, and send the digest to Telegram.
+Read DR news every day, build a compact digest of all stories, and send it to Telegram with interactive follow-up summaries on demand.
 
 ## Delivery strategy
 
@@ -14,11 +14,12 @@ The project will be built incrementally. Each milestone should leave the reposit
 2. Normalize the stories into a stable internal data model.
 3. Enrich stories with article-page content.
 4. Translate key content into English and Chinese.
-5. Select the stories to include in the daily digest.
-6. Summarize the selected stories.
-7. Format the summary for Telegram.
-8. Send the message.
-9. Persist run state and outputs for traceability.
+5. Generate a short summary for each story.
+6. Build a numbered daily digest from all stories.
+7. Persist digest state so replies can resolve back to the correct story.
+8. Handle interactive requests for longer summaries.
+9. Send digest and follow-up messages through Telegram.
+10. Persist run state and outputs for traceability.
 
 ## Design principles
 
@@ -33,6 +34,7 @@ The project will be built incrementally. Each milestone should leave the reposit
 ```text
 docs/
   DECISIONS.md
+  INTERACTIVE_DIGEST_DESIGN.md
   PROJECT_STRUCTURE.md
 
 src/dr_digest/
@@ -47,13 +49,14 @@ src/dr_digest/
   translate/
     __init__.py
     argos_translate.py
-  select/
+  digest/
     __init__.py
-    ranking.py
+    short_summary.py
+    menu_builder.py
+    lookup.py
   summarize/
     __init__.py
-    formatter.py
-    openai_client.py
+    long_summary.py
   publish/
     __init__.py
     telegram.py
@@ -68,7 +71,7 @@ src/dr_digest/
 tests/
   ingest/
   translate/
-  select/
+  digest/
   summarize/
   publish/
   storage/
@@ -96,34 +99,34 @@ var/
 - Return normalized `NewsItem` objects only.
 - Do not summarize or send notifications here.
 
-### `select/`
-
-- Decide which stories matter enough to include.
-- Start simple: latest `N` items or a rule-based score.
-- Later, this can become smarter without affecting Telegram delivery code.
-
 ### `translate/`
 
 - Translate Danish source content into user-facing languages.
 - Keep translation-specific backend logic out of ingest and summary modules.
 - Produce structured bilingual fields that downstream steps can reuse.
 
+### `digest/`
+
+- Generate short summaries for every story.
+- Build numbered digest messages and batch them when needed.
+- Persist lookup data so a user reply can map back to the chosen story.
+
 ### `summarize/`
 
-- Convert selected stories into a concise digest.
-- Support an OpenAI-based summarizer and a local fallback.
-- Produce one clean digest object that downstream delivery code can reuse.
+- Generate longer summaries for a specific chosen story.
+- Keep long-summary logic separate from the short daily digest layer.
 
 ### `publish/`
 
-- Format and send messages to Telegram.
-- Contain Telegram-specific payload rules and retry logic.
+- Send digest messages and follow-up detail messages to Telegram.
+- Contain Telegram-specific message formatting, batching, and interaction logic.
 - No DR parsing logic should live here.
 
 ### `storage/`
 
-- Save raw feed snapshots, generated digests, and send-state files.
+- Save raw feed snapshots, generated digests, and interactive state files.
 - Track whether a digest for a given day has already been sent.
+- Store story-number mappings for follow-up requests.
 
 ### `runtime/`
 
@@ -151,29 +154,33 @@ var/
 - Save bilingual output inside the normalized snapshot.
 - Keep translation optional and limitable.
 
-### Milestone 4: Story selection
+### Milestone 4: Short summaries for all stories
 
-- Decide which items make the digest.
-- Start with simple, deterministic rules.
-- Save the selected set for inspection.
+- Generate one-sentence summaries for every story.
+- Save the short-summary result in a digest-oriented artifact.
 
-### Milestone 5: Summarization
+### Milestone 5: Daily digest assembly
 
-- Add local summary formatting first.
-- Add OpenAI summarization second.
-- Save the final digest markdown to `var/digests/`.
+- Build a numbered digest from all stories.
+- Add batching rules for long daily lists.
+- Save item-number mappings for lookup.
 
-### Milestone 6: Telegram publishing
+### Milestone 6: Interactive detail summaries
+
+- Generate longer summaries for a single requested story.
+- Resolve user replies like `3` back to stored digest items.
+
+### Milestone 7: Telegram interaction layer
 
 - Add Telegram Bot API integration.
-- Support one bot token and one destination chat ID.
-- Record send results in `var/state/`.
+- Send the numbered digest.
+- Support follow-up replies or button-based requests for detail.
 
-### Milestone 7: Daily automation
+### Milestone 8: Daily automation
 
 - Wire the runtime job to `launchd`.
-- Prevent duplicate sends for the same digest unless forced.
-- Add logs and operational notes.
+- Prevent duplicate sends unless forced.
+- Keep per-day interactive digest state available.
 
 ## Current repo note
 

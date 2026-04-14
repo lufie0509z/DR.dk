@@ -177,3 +177,43 @@ Reason:
 - The Homebrew-managed Python environment may block direct package installation.
 - Argos Translate has a non-trivial dependency stack and is safer to isolate in a project-local environment.
 - A local virtual environment makes the translation pipeline reproducible across runs.
+
+### Product interaction model
+
+The product should send a compact daily digest of all stories and let the user request longer summaries for the stories they care about.
+
+Reason:
+
+- It reduces the risk of hiding stories the user would want to see.
+- It fits Telegram better than a one-way top-N digest.
+- It makes the product interactive instead of forcing perfect selection up front.
+
+### Digest shape
+
+The first Telegram message should contain a numbered list of stories with one-sentence summaries.
+
+Reason:
+
+- A short summary is fast to scan.
+- Numbering creates a simple reply-based interaction model.
+- The digest remains useful even before richer Telegram UI is added.
+
+### Follow-up detail model
+
+Longer summaries should be generated on demand when the user replies with a story number.
+
+Reason:
+
+- Long summaries are only useful for the subset of stories the user cares about.
+- This keeps the daily push compact.
+- It avoids producing large volumes of detail the user may never read.
+
+### Architecture change from selection to interaction
+
+The next milestones should focus on short summaries, digest assembly, and interactive lookup instead of strict top-N story selection.
+
+Reason:
+
+- The new product direction depends more on digest usability than ranking precision.
+- A lightweight interactive menu is a better first Telegram experience.
+- Selection can still exist later as a secondary ranking aid, but it is no longer the primary user interaction.

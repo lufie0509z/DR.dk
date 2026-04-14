@@ -1,6 +1,6 @@
 # DR Daily Digest
 
-This project will read DR news every day, summarize the most important stories, and deliver the digest to Telegram.
+This project will read DR news every day, build a compact digest of all stories, and deliver it to Telegram with on-demand long summaries for the stories the user asks about.
 
 We are building it in small tasks rather than finishing everything at once.
 
@@ -10,6 +10,7 @@ The earlier prototype code has been removed. The repository is now intentionally
 
 - [Project structure](docs/PROJECT_STRUCTURE.md)
 - [Decision log](docs/DECISIONS.md)
+- [Interactive digest design](docs/INTERACTIVE_DIGEST_DESIGN.md)
 - [Milestone 1 summary](docs/MILESTONE_01_INGEST.md)
 - [Milestone 2 summary](docs/MILESTONE_02_ENRICHED_INGEST.md)
 - [Milestone 3 summary](docs/MILESTONE_03_TRANSLATION.md)
@@ -27,6 +28,12 @@ Milestone 1, Milestone 2, and Milestone 3 are now implemented:
 - A normalized JSON snapshot is saved next to the XML file.
 - Optional article enrichment fetches DR article pages and stores article HTML plus enriched fields such as section, summary, body text, and authors.
 - Optional translation adds English and Chinese translations to each saved item with Argos Translate.
+
+The next product direction is an interactive digest:
+
+- send a numbered list of all stories for the day
+- include a one-sentence summary for each story
+- let the user request a longer summary by replying with the story number
 
 ## Quick start
 
