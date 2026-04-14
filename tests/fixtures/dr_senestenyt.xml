@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title><![CDATA[Kort nyt | DR]]></title>
+    <description><![CDATA[Nyheder fra sektionen Kort nyt]]></description>
+    <link>https://www.dr.dk/</link>
+    <generator>rss-feeds</generator>
+    <lastBuildDate>Tue, 14 Apr 2026 12:59:48 GMT</lastBuildDate>
+    <language><![CDATA[da]]></language>
+    <docs>https://www.dr.dk/nyheder/dr-nyheder-som-rss-feed</docs>
+    <atom:link href="https://www.dr.dk/nyheder/service/feeds/senestenyt" rel="self" type="application/rss+xml"/>
+    <item>
+      <title><![CDATA[Udbrud af fugleinfluenza i fasanbesætning på Falster]]></title>
+      <link>https://www.dr.dk/nyheder/seneste/udbrud-af-fugleinfluenza-i-fasanbesaetning-paa-falster</link>
+      <guid isPermaLink="false">urn:dr:umbraco:article:d4ac3f8b-1476-4044-8369-1f5d4448b0e1</guid>
+      <pubDate>Tue, 14 Apr 2026 12:48:00 GMT</pubDate>
+    </item>
+    <item>
+      <title><![CDATA[Fuld støtte fra Giorgia Meloni til pave Leo efter kritik fra Trump]]></title>
+      <link>https://www.dr.dk/nyheder/seneste/fuld-stoette-fra-giorgia-meloni-til-pave-leo-efter-kritik-fra-trump</link>
+      <guid isPermaLink="false">urn:dr:umbraco:article:e0b75e2a-6d4d-46d8-a536-3b2a7a0c1d35</guid>
+      <pubDate>Tue, 14 Apr 2026 12:44:00 GMT</pubDate>
+      <media:content url="https://asset.dr.dk/imagescaler01/example.jpg&amp;w=1200"/>
+    </item>
+  </channel>
+</rss>
