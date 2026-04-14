@@ -7,6 +7,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from dr_digest.cli import main
 
@@ -41,6 +42,43 @@ class CliTests(unittest.TestCase):
                     os.environ.pop("RAW_STORAGE_DIR", None)
                 else:
                     os.environ["RAW_STORAGE_DIR"] = previous_raw_dir
+
+    @patch("dr_digest.cli.translate_feed_snapshot")
+    def test_ingest_dr_command_reports_translation_count(self, mock_translate_feed_snapshot) -> None:
+        mock_translate_feed_snapshot.return_value = 2
+        with tempfile.TemporaryDirectory() as temp_dir:
+            previous_raw_dir = os.environ.get("RAW_STORAGE_DIR")
+            previous_argos_dir = os.environ.get("ARGOS_PACKAGES_DIR")
+            os.environ["RAW_STORAGE_DIR"] = temp_dir
+            os.environ["ARGOS_PACKAGES_DIR"] = str(Path(temp_dir) / "argos" / "packages")
+            try:
+                stdout = io.StringIO()
+                with contextlib.redirect_stdout(stdout):
+                    exit_code = main(
+                        [
+                            "ingest-dr",
+                            "--feed-url",
+                            FIXTURE_PATH.as_uri(),
+                            "--max-items",
+                            "2",
+                            "--translate",
+                            "--translation-limit",
+                            "2",
+                        ]
+                    )
+                self.assertEqual(exit_code, 0)
+                output = json.loads(stdout.getvalue())
+                self.assertEqual(output["translated_item_count"], 2)
+            finally:
+                if previous_raw_dir is None:
+                    os.environ.pop("RAW_STORAGE_DIR", None)
+                else:
+                    os.environ["RAW_STORAGE_DIR"] = previous_raw_dir
+
+                if previous_argos_dir is None:
+                    os.environ.pop("ARGOS_PACKAGES_DIR", None)
+                else:
+                    os.environ["ARGOS_PACKAGES_DIR"] = previous_argos_dir
 
 
 if __name__ == "__main__":

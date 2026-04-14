@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Daily DR news digest project"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["argostranslate"]
 
 [project.scripts]
 dr-digest = "dr_digest.cli:main"

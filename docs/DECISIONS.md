@@ -85,3 +85,95 @@ Reason:
 
 - `urllib` keeps the default implementation small and standard-library based.
 - A `curl` fallback makes the ingest more resilient when local Python networking behaves differently from the system HTTP stack.
+
+### Article enrichment source
+
+Milestone 2 extracts article content from DR's embedded Next.js page payload instead of scraping visible HTML paragraphs.
+
+Reason:
+
+- The payload contains a cleaner structured representation of the article body.
+- It includes metadata such as section, authors, and images in a more stable form.
+- It is less brittle than relying on CSS classes or rendered markup.
+
+### Enriched ingest mode
+
+Article enrichment is enabled explicitly with a CLI flag and supports a separate article fetch limit.
+
+Reason:
+
+- Fetching article pages is more expensive than reading the RSS feed alone.
+- Explicit control keeps milestone 2 safe to run during development and testing.
+- A separate limit makes it possible to enrich only the first few items before later ranking logic exists.
+
+### Enriched artifact format
+
+When article enrichment is enabled, raw article HTML is saved alongside the feed snapshot.
+
+Files:
+
+- `<timestamp>.articles/*.article.html`
+
+Reason:
+
+- The raw article HTML is useful for debugging parser regressions.
+- Keeping article HTML next to the matching feed snapshot makes each ingest run traceable.
+
+### Translation provider
+
+Milestone 3 uses Argos Translate for automatic English and Chinese translation.
+
+Reason:
+
+- It avoids per-request API cost.
+- It can run locally after the language models are downloaded.
+- It fits the project's lightweight Python structure.
+
+### Translation placement in the pipeline
+
+Translation happens after ingest and optional article enrichment.
+
+Reason:
+
+- Enrichment provides better source text than RSS headlines alone.
+- The translated output should reflect the final normalized source fields.
+- Translation can remain optional while the rest of the pipeline is still evolving.
+
+### Translation output format
+
+Translations are stored inside each item under `translations.en` and `translations.zh`.
+
+Reason:
+
+- The translated content stays attached to its source item.
+- Later ranking, summary, or Telegram formatting can choose either source or translated text without reloading separate files.
+- Keeping translations in the main snapshot makes inspection easier for a non-Danish reader.
+
+### Argos model strategy
+
+The translation stage installs the required Argos language models on first use and stores them locally inside the project workspace.
+
+Default directory:
+
+- `var/argos/packages`
+
+Language-pair strategy:
+
+- `da -> en`
+- `en -> zh`
+
+Reason:
+
+- Argos Translate supports pivot translation through installed intermediate language pairs.
+- This avoids relying on a paid external translation API.
+- Keeping models in the project workspace makes the setup explicit and easy to inspect.
+
+### Python environment for local execution
+
+The project should be run from a local virtual environment such as `.venv` instead of relying on the system Python installation.
+
+Reason:
+
+- The Homebrew-managed Python environment may block direct package installation.
+- Argos Translate has a non-trivial dependency stack and is safer to isolate in a project-local environment.
+- A local virtual environment makes the translation pipeline reproducible across runs.

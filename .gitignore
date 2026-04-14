@@ -7,6 +7,7 @@ dist/
 build/
 *.egg-info/
 var/raw/
+var/argos/
 var/digests/
 var/state/
 var/logs/*.log

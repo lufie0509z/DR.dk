@@ -11,45 +11,67 @@ The earlier prototype code has been removed. The repository is now intentionally
 - [Project structure](docs/PROJECT_STRUCTURE.md)
 - [Decision log](docs/DECISIONS.md)
 - [Milestone 1 summary](docs/MILESTONE_01_INGEST.md)
+- [Milestone 2 summary](docs/MILESTONE_02_ENRICHED_INGEST.md)
+- [Milestone 3 summary](docs/MILESTONE_03_TRANSLATION.md)
 
 ## Working rule
 
 Important decisions and structural changes should be recorded in markdown under `docs/`.
 
-## Current agreed next step
-
-Build the DR ingest path first:
-
-1. Fetch DR RSS reliably.
-2. Normalize stories into a stable internal model.
-3. Save the fetched result locally so later steps are traceable.
-
-Telegram sending should come after the ingest and summary steps are stable.
-
 ## Current implementation status
 
-Milestone 1 is now implemented:
+Milestone 1, Milestone 2, and Milestone 3 are now implemented:
 
 - `dr-digest ingest-dr` fetches DR's RSS feed.
 - The raw XML is saved under `var/raw/dr/YYYY-MM-DD/`.
 - A normalized JSON snapshot is saved next to the XML file.
+- Optional article enrichment fetches DR article pages and stores article HTML plus enriched fields such as section, summary, body text, and authors.
+- Optional translation adds English and Chinese translations to each saved item with Argos Translate.
 
 ## Quick start
 
-1. Create a local config file.
+1. Create a local virtual environment and install project dependencies.
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -e .
+```
+
+2. Create a local config file.
 
 ```bash
 cp .env.example .env
 ```
 
-2. Run the ingest command.
+3. Run the ingest command.
 
 ```bash
-PYTHONPATH=src python3 -m dr_digest ingest-dr
+PYTHONPATH=src .venv/bin/python -m dr_digest ingest-dr
 ```
 
-3. Optional: print the normalized items to stdout.
+4. Optional: enrich article pages for the first 5 items.
 
 ```bash
-PYTHONPATH=src python3 -m dr_digest ingest-dr --print-items
+PYTHONPATH=src .venv/bin/python -m dr_digest ingest-dr --enrich-articles
 ```
+
+5. Optional: translate the first 5 items to English and Chinese.
+
+```bash
+PYTHONPATH=src .venv/bin/python -m dr_digest ingest-dr --translate
+```
+
+6. Optional: enrich and translate in one run.
+
+```bash
+PYTHONPATH=src .venv/bin/python -m dr_digest ingest-dr --enrich-articles --translate
+```
+
+7. Optional: print the normalized items to stdout.
+
+```bash
+PYTHONPATH=src .venv/bin/python -m dr_digest ingest-dr --print-items
+```
+
+Translation with Argos Translate will download language models on the first run and then run locally.
+On this macOS/Homebrew setup, the project should be run from the local virtual environment rather than the system Python.

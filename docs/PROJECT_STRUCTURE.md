@@ -12,11 +12,13 @@ The project will be built incrementally. Each milestone should leave the reposit
 
 1. Fetch DR news input.
 2. Normalize the stories into a stable internal data model.
-3. Select the stories to include in the daily digest.
-4. Summarize the selected stories.
-5. Format the summary for Telegram.
-6. Send the message.
-7. Persist run state and outputs for traceability.
+3. Enrich stories with article-page content.
+4. Translate key content into English and Chinese.
+5. Select the stories to include in the daily digest.
+6. Summarize the selected stories.
+7. Format the summary for Telegram.
+8. Send the message.
+9. Persist run state and outputs for traceability.
 
 ## Design principles
 
@@ -42,6 +44,9 @@ src/dr_digest/
     __init__.py
     dr_rss.py
     article_fetch.py
+  translate/
+    __init__.py
+    argos_translate.py
   select/
     __init__.py
     ranking.py
@@ -62,6 +67,7 @@ src/dr_digest/
 
 tests/
   ingest/
+  translate/
   select/
   summarize/
   publish/
@@ -96,6 +102,12 @@ var/
 - Start simple: latest `N` items or a rule-based score.
 - Later, this can become smarter without affecting Telegram delivery code.
 
+### `translate/`
+
+- Translate Danish source content into user-facing languages.
+- Keep translation-specific backend logic out of ingest and summary modules.
+- Produce structured bilingual fields that downstream steps can reuse.
+
 ### `summarize/`
 
 - Convert selected stories into a concise digest.
@@ -127,25 +139,37 @@ var/
 - Save a raw snapshot to `var/raw/`.
 - Add unit tests for feed parsing.
 
-### Milestone 2: Story selection
+### Milestone 2: Enriched ingest
+
+- Fetch linked article pages.
+- Extract article metadata and body text.
+- Save raw article HTML plus enriched item fields.
+
+### Milestone 3: Translation
+
+- Translate items into English and Chinese.
+- Save bilingual output inside the normalized snapshot.
+- Keep translation optional and limitable.
+
+### Milestone 4: Story selection
 
 - Decide which items make the digest.
 - Start with simple, deterministic rules.
 - Save the selected set for inspection.
 
-### Milestone 3: Summarization
+### Milestone 5: Summarization
 
 - Add local summary formatting first.
 - Add OpenAI summarization second.
 - Save the final digest markdown to `var/digests/`.
 
-### Milestone 4: Telegram publishing
+### Milestone 6: Telegram publishing
 
 - Add Telegram Bot API integration.
 - Support one bot token and one destination chat ID.
 - Record send results in `var/state/`.
 
-### Milestone 5: Daily automation
+### Milestone 7: Daily automation
 
 - Wire the runtime job to `launchd`.
 - Prevent duplicate sends for the same digest unless forced.
