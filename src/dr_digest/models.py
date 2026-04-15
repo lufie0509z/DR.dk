@@ -22,6 +22,7 @@ class LocalizedNewsItem:
     section_path: list[str] = field(default_factory=list)
     summary: str = ""
     body_text: str = ""
+    short_summary: str = ""
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -30,6 +31,7 @@ class LocalizedNewsItem:
             "section_path": self.section_path,
             "summary": self.summary,
             "body_text": self.body_text,
+            "short_summary": self.short_summary,
         }
 
 
@@ -56,6 +58,7 @@ class NewsItem:
     section_path: list[str] = field(default_factory=list)
     summary: str = ""
     body_text: str = ""
+    short_summary: str = ""
     authors: list[str] = field(default_factory=list)
     article_image_url: str | None = None
     article_html_path: str | None = None
@@ -85,6 +88,7 @@ class NewsItem:
             "section_path": self.section_path,
             "summary": self.summary,
             "body_text": self.body_text,
+            "short_summary": self.short_summary,
             "authors": self.authors,
             "article_image_url": self.article_image_url,
             "article_html_path": self.article_html_path,
@@ -119,3 +123,4 @@ class IngestArtifacts:
     items_json_path: str
     article_html_dir: str | None = None
     article_html_count: int = 0
+    short_digest_path: str | None = None

@@ -28,6 +28,7 @@ class Settings:
     dr_article_fetch_count: int
     dr_translation_count: int
     raw_storage_dir: Path
+    digest_storage_dir: Path
     argos_packages_dir: Path
 
     @classmethod
@@ -35,6 +36,7 @@ class Settings:
         project_root = Path(__file__).resolve().parents[2]
         load_dotenv(project_root / ".env")
         raw_storage_dir = Path(os.getenv("RAW_STORAGE_DIR", "var/raw"))
+        digest_storage_dir = Path(os.getenv("DIGEST_STORAGE_DIR", "var/digests"))
         return cls(
             project_root=project_root,
             dr_feed_url=os.getenv("DR_FEED_URL", "https://www.dr.dk/nyheder/service/feeds/senestenyt"),
@@ -43,6 +45,7 @@ class Settings:
             dr_article_fetch_count=int(os.getenv("DR_ARTICLE_FETCH_COUNT", "5")),
             dr_translation_count=int(os.getenv("DR_TRANSLATION_COUNT", "5")),
             raw_storage_dir=raw_storage_dir,
+            digest_storage_dir=digest_storage_dir,
             argos_packages_dir=Path(os.getenv("ARGOS_PACKAGES_DIR", "var/argos/packages")),
         )
 
@@ -57,6 +60,12 @@ class Settings:
         if self.argos_packages_dir.is_absolute():
             return self.argos_packages_dir
         return self.project_root / self.argos_packages_dir
+
+    @property
+    def resolved_digest_storage_dir(self) -> Path:
+        if self.digest_storage_dir.is_absolute():
+            return self.digest_storage_dir
+        return self.project_root / self.digest_storage_dir
 
     def with_overrides(
         self,

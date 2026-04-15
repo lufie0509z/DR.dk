@@ -5,9 +5,10 @@ import json
 from datetime import datetime, timezone
 
 from .config import Settings
+from .digest import apply_short_summaries
 from .ingest import enrich_feed_snapshot
 from .ingest.dr_rss import fetch_dr_feed_snapshot
-from .storage.files import write_feed_snapshot
+from .storage.files import write_feed_snapshot, write_short_digest
 from .translate import translate_feed_snapshot
 
 
@@ -73,12 +74,18 @@ def run_ingest_dr(args: argparse.Namespace) -> int:
             packages_dir=settings.resolved_argos_packages_dir,
             translation_limit=settings.dr_translation_count,
         )
+    short_summary_count = apply_short_summaries(snapshot)
     artifacts = write_feed_snapshot(
         snapshot=snapshot,
         raw_xml=raw_xml,
         base_dir=settings.resolved_raw_storage_dir,
         article_html_by_guid=article_html_by_guid,
     )
+    short_digest_path = write_short_digest(
+        snapshot=snapshot,
+        base_dir=settings.resolved_digest_storage_dir,
+    )
+    artifacts.short_digest_path = short_digest_path
 
     result = {
         "source": snapshot.source_name,
@@ -88,8 +95,10 @@ def run_ingest_dr(args: argparse.Namespace) -> int:
         "item_count": len(snapshot.items),
         "enriched_item_count": sum(1 for item in snapshot.items if item.body_text),
         "translated_item_count": translated_item_count,
+        "short_summary_count": short_summary_count,
         "feed_xml_path": artifacts.feed_xml_path,
         "items_json_path": artifacts.items_json_path,
+        "short_digest_path": artifacts.short_digest_path,
         "headlines": [item.title for item in snapshot.items[:5]],
     }
     if artifacts.article_html_dir:

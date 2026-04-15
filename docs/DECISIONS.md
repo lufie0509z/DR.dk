@@ -217,3 +217,33 @@ Reason:
 - The new product direction depends more on digest usability than ranking precision.
 - A lightweight interactive menu is a better first Telegram experience.
 - Selection can still exist later as a secondary ranking aid, but it is no longer the primary user interaction.
+
+### Short-summary strategy
+
+Milestone 4 generates one-sentence summaries locally with a deterministic heuristic.
+
+Priority order:
+
+- use the article summary when available
+- otherwise use the first sentence of the article body
+- otherwise fall back to a title-based sentence
+
+Reason:
+
+- It avoids paid summarization APIs.
+- It is easy to test and reason about.
+- It produces usable short summaries even when enrichment is missing.
+
+### Digest artifact format
+
+Milestone 4 writes a digest-oriented artifact under `var/digests/` in addition to the raw snapshot under `var/raw/`.
+
+File:
+
+- `<timestamp>.short.json`
+
+Reason:
+
+- It separates digest-facing output from raw ingest storage.
+- It prepares the pipeline for the next milestone, where numbered daily digest messages will be assembled.
+- It gives a clean inspection point for short summaries without opening the full raw snapshot.

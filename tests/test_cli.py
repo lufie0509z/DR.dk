@@ -19,7 +19,9 @@ class CliTests(unittest.TestCase):
     def test_ingest_dr_command_saves_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             previous_raw_dir = os.environ.get("RAW_STORAGE_DIR")
+            previous_digest_dir = os.environ.get("DIGEST_STORAGE_DIR")
             os.environ["RAW_STORAGE_DIR"] = temp_dir
+            os.environ["DIGEST_STORAGE_DIR"] = str(Path(temp_dir) / "digests")
             try:
                 stdout = io.StringIO()
                 with contextlib.redirect_stdout(stdout):
@@ -35,21 +37,30 @@ class CliTests(unittest.TestCase):
                 self.assertEqual(exit_code, 0)
                 output = json.loads(stdout.getvalue())
                 self.assertEqual(output["item_count"], 2)
+                self.assertEqual(output["short_summary_count"], 2)
                 self.assertTrue(Path(output["feed_xml_path"]).exists())
                 self.assertTrue(Path(output["items_json_path"]).exists())
+                self.assertTrue(Path(output["short_digest_path"]).exists())
             finally:
                 if previous_raw_dir is None:
                     os.environ.pop("RAW_STORAGE_DIR", None)
                 else:
                     os.environ["RAW_STORAGE_DIR"] = previous_raw_dir
 
+                if previous_digest_dir is None:
+                    os.environ.pop("DIGEST_STORAGE_DIR", None)
+                else:
+                    os.environ["DIGEST_STORAGE_DIR"] = previous_digest_dir
+
     @patch("dr_digest.cli.translate_feed_snapshot")
     def test_ingest_dr_command_reports_translation_count(self, mock_translate_feed_snapshot) -> None:
         mock_translate_feed_snapshot.return_value = 2
         with tempfile.TemporaryDirectory() as temp_dir:
             previous_raw_dir = os.environ.get("RAW_STORAGE_DIR")
+            previous_digest_dir = os.environ.get("DIGEST_STORAGE_DIR")
             previous_argos_dir = os.environ.get("ARGOS_PACKAGES_DIR")
             os.environ["RAW_STORAGE_DIR"] = temp_dir
+            os.environ["DIGEST_STORAGE_DIR"] = str(Path(temp_dir) / "digests")
             os.environ["ARGOS_PACKAGES_DIR"] = str(Path(temp_dir) / "argos" / "packages")
             try:
                 stdout = io.StringIO()
@@ -74,6 +85,11 @@ class CliTests(unittest.TestCase):
                     os.environ.pop("RAW_STORAGE_DIR", None)
                 else:
                     os.environ["RAW_STORAGE_DIR"] = previous_raw_dir
+
+                if previous_digest_dir is None:
+                    os.environ.pop("DIGEST_STORAGE_DIR", None)
+                else:
+                    os.environ["DIGEST_STORAGE_DIR"] = previous_digest_dir
 
                 if previous_argos_dir is None:
                     os.environ.pop("ARGOS_PACKAGES_DIR", None)
