@@ -122,3 +122,27 @@ def write_daily_digest_menu(digest_payload: dict[str, object], base_dir: Path, *
         encoding="utf-8",
     )
     return str(menu_json_path), str(menu_batch_dir), len(digest_payload.get("batches", []))
+
+
+def write_detail_artifact(
+    detail_payload: dict[str, object],
+    detail_text: str,
+    base_dir: Path,
+    *,
+    source_name: str,
+    fetched_at,
+) -> tuple[str, str]:
+    stamp = fetched_at.strftime("%Y-%m-%dT%H-%M-%SZ")
+    day_dir = base_dir / source_name / fetched_at.strftime("%Y-%m-%d")
+    day_dir.mkdir(parents=True, exist_ok=True)
+
+    number = int(detail_payload["number"])
+    detail_json_path = day_dir / f"{stamp}.detail.{number:02d}.json"
+    detail_text_path = day_dir / f"{stamp}.detail.{number:02d}.txt"
+
+    detail_json_path.write_text(
+        json.dumps(detail_payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    detail_text_path.write_text(detail_text.strip() + "\n", encoding="utf-8")
+    return str(detail_json_path), str(detail_text_path)

@@ -99,6 +99,61 @@ class CliTests(unittest.TestCase):
                 else:
                     os.environ["ARGOS_PACKAGES_DIR"] = previous_argos_dir
 
+    def test_detail_command_writes_detail_artifacts(self) -> None:
+        menu_payload = {
+            "source_name": "dr",
+            "fetched_at": "2026-04-15T21:41:41+00:00",
+            "display_language": "en",
+            "entries": [
+                {
+                    "number": 3,
+                    "guid": "urn:example:3",
+                    "link": "https://www.dr.dk/nyheder/example-3",
+                    "title": "Dansk titel",
+                    "summary": "Dansk resume",
+                    "body_text": "Dansk brødtekst",
+                    "section": "Kort nyt",
+                    "published_at": "2026-04-15T12:00:00+00:00",
+                    "translations": {
+                        "en": {
+                            "title": "English title",
+                            "summary": "English summary",
+                            "body_text": "English body text",
+                        }
+                    },
+                }
+            ],
+        }
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            previous_digest_dir = os.environ.get("DIGEST_STORAGE_DIR")
+            os.environ["DIGEST_STORAGE_DIR"] = str(Path(temp_dir) / "digests")
+            menu_path = Path(temp_dir) / "menu.json"
+            menu_path.write_text(json.dumps(menu_payload), encoding="utf-8")
+            try:
+                stdout = io.StringIO()
+                with contextlib.redirect_stdout(stdout):
+                    exit_code = main(
+                        [
+                            "detail",
+                            "--menu-json",
+                            str(menu_path),
+                            "--number",
+                            "3",
+                            "--language",
+                            "en",
+                        ]
+                    )
+                self.assertEqual(exit_code, 0)
+                output = json.loads(stdout.getvalue())
+                self.assertTrue(Path(output["detail_json_path"]).exists())
+                self.assertTrue(Path(output["detail_text_path"]).exists())
+            finally:
+                if previous_digest_dir is None:
+                    os.environ.pop("DIGEST_STORAGE_DIR", None)
+                else:
+                    os.environ["DIGEST_STORAGE_DIR"] = previous_digest_dir
+
 
 if __name__ == "__main__":
     unittest.main()

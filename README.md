@@ -16,6 +16,7 @@ The earlier prototype code has been removed. The repository is now intentionally
 - [Milestone 3 summary](docs/MILESTONE_03_TRANSLATION.md)
 - [Milestone 4 summary](docs/MILESTONE_04_SHORT_SUMMARIES.md)
 - [Milestone 5 summary](docs/MILESTONE_05_DAILY_DIGEST_ASSEMBLY.md)
+- [Milestone 6 summary](docs/MILESTONE_06_INTERACTIVE_DETAIL_LOOKUP.md)
 
 ## Working rule
 

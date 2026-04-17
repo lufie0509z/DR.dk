@@ -127,3 +127,5 @@ class IngestArtifacts:
     menu_json_path: str | None = None
     menu_batch_dir: str | None = None
     menu_batch_count: int = 0
+    detail_json_path: str | None = None
+    detail_text_path: str | None = None

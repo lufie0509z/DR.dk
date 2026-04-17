@@ -7,7 +7,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from dr_digest.models import FeedSnapshot, NewsItem
-from dr_digest.storage.files import write_daily_digest_menu, write_feed_snapshot, write_short_digest
+from dr_digest.storage.files import (
+    write_daily_digest_menu,
+    write_detail_artifact,
+    write_feed_snapshot,
+    write_short_digest,
+)
 
 
 class WriteFeedSnapshotTests(unittest.TestCase):
@@ -133,6 +138,27 @@ class WriteFeedSnapshotTests(unittest.TestCase):
             self.assertTrue(Path(menu_batch_dir).exists())
             self.assertEqual(menu_batch_count, 1)
             self.assertTrue((Path(menu_batch_dir) / "01.txt").exists())
+
+    def test_writes_detail_artifact(self) -> None:
+        detail_payload = {
+            "number": 3,
+            "guid": "urn:example:3",
+            "title": "English title",
+            "summary": "English summary",
+            "body_text": "English body text",
+            "link": "https://www.dr.dk/nyheder/example-3",
+        }
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            detail_json_path, detail_text_path = write_detail_artifact(
+                detail_payload,
+                "Story 3: English title",
+                Path(temp_dir),
+                source_name="dr",
+                fetched_at=datetime(2026, 4, 15, 21, 41, tzinfo=timezone.utc),
+            )
+            self.assertTrue(Path(detail_json_path).exists())
+            self.assertTrue(Path(detail_text_path).exists())
 
 
 if __name__ == "__main__":

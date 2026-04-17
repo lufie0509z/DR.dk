@@ -300,3 +300,38 @@ Reason:
 - The JSON artifact preserves the number-to-story mapping for later reply lookup.
 - The text files give a ready-to-send representation for Telegram delivery.
 - Keeping both formats makes later interaction work simpler.
+
+### Detail lookup source of truth
+
+Milestone 6 uses the stored menu JSON as the lookup source when resolving a reply number like `3`.
+
+Reason:
+
+- The menu artifact already contains stable numbering for the exact digest the user saw.
+- Reply lookup must match the delivered digest, not a newly re-sorted or regenerated list.
+- This keeps later Telegram interaction deterministic.
+
+### Detail rendering strategy
+
+The detail view should use localized fields when they exist and otherwise fall back to the original Danish source fields.
+
+Reason:
+
+- The requested output language should be respected when possible.
+- Fallback avoids losing the ability to answer when translation is missing.
+- This keeps the interaction robust while translation quality is still evolving.
+
+### Detail artifact format
+
+Milestone 6 writes both JSON and text artifacts for a requested story number.
+
+Files:
+
+- `<timestamp>.detail.<number>.json`
+- `<timestamp>.detail.<number>.txt`
+
+Reason:
+
+- The JSON file preserves structured data for future programmatic use.
+- The text file gives a ready-to-send response body for Telegram delivery.
+- Writing both formats keeps the future publish layer simple.
