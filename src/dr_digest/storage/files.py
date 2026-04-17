@@ -101,3 +101,24 @@ def write_short_digest(snapshot: FeedSnapshot, base_dir: Path) -> str:
         encoding="utf-8",
     )
     return str(digest_path)
+
+
+def write_daily_digest_menu(digest_payload: dict[str, object], base_dir: Path, *, source_name: str, fetched_at) -> tuple[str, str, int]:
+    stamp = fetched_at.strftime("%Y-%m-%dT%H-%M-%SZ")
+    day_dir = base_dir / source_name / fetched_at.strftime("%Y-%m-%d")
+    day_dir.mkdir(parents=True, exist_ok=True)
+
+    menu_json_path = day_dir / f"{stamp}.menu.json"
+    menu_batch_dir = day_dir / f"{stamp}.menu"
+    menu_batch_dir.mkdir(parents=True, exist_ok=True)
+
+    for batch in digest_payload.get("batches", []):
+        batch_number = int(batch["batch_number"])
+        batch_path = menu_batch_dir / f"{batch_number:02d}.txt"
+        batch_path.write_text(str(batch["text"]).strip() + "\n", encoding="utf-8")
+
+    menu_json_path.write_text(
+        json.dumps(digest_payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return str(menu_json_path), str(menu_batch_dir), len(digest_payload.get("batches", []))

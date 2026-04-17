@@ -5,10 +5,10 @@ import json
 from datetime import datetime, timezone
 
 from .config import Settings
-from .digest import apply_short_summaries
+from .digest import apply_short_summaries, build_daily_digest
 from .ingest import enrich_feed_snapshot
 from .ingest.dr_rss import fetch_dr_feed_snapshot
-from .storage.files import write_feed_snapshot, write_short_digest
+from .storage.files import write_daily_digest_menu, write_feed_snapshot, write_short_digest
 from .translate import translate_feed_snapshot
 
 
@@ -86,6 +86,20 @@ def run_ingest_dr(args: argparse.Namespace) -> int:
         base_dir=settings.resolved_digest_storage_dir,
     )
     artifacts.short_digest_path = short_digest_path
+    daily_digest = build_daily_digest(
+        snapshot,
+        language=settings.digest_language,
+        batch_size=settings.digest_batch_size,
+    )
+    menu_json_path, menu_batch_dir, menu_batch_count = write_daily_digest_menu(
+        daily_digest,
+        base_dir=settings.resolved_digest_storage_dir,
+        source_name=snapshot.source_name,
+        fetched_at=snapshot.fetched_at,
+    )
+    artifacts.menu_json_path = menu_json_path
+    artifacts.menu_batch_dir = menu_batch_dir
+    artifacts.menu_batch_count = menu_batch_count
 
     result = {
         "source": snapshot.source_name,
@@ -99,6 +113,9 @@ def run_ingest_dr(args: argparse.Namespace) -> int:
         "feed_xml_path": artifacts.feed_xml_path,
         "items_json_path": artifacts.items_json_path,
         "short_digest_path": artifacts.short_digest_path,
+        "menu_json_path": artifacts.menu_json_path,
+        "menu_batch_dir": artifacts.menu_batch_dir,
+        "menu_batch_count": artifacts.menu_batch_count,
         "headlines": [item.title for item in snapshot.items[:5]],
     }
     if artifacts.article_html_dir:

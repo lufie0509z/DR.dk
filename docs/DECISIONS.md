@@ -149,6 +149,16 @@ Reason:
 - Later ranking, summary, or Telegram formatting can choose either source or translated text without reloading separate files.
 - Keeping translations in the main snapshot makes inspection easier for a non-Danish reader.
 
+### Translation coverage default
+
+The default translation count is `0`, which means "translate all items in the snapshot".
+
+Reason:
+
+- A digest configured for English or Chinese should not silently fall back to Danish for most items.
+- Full translation coverage makes the menu language consistent by default.
+- Explicit smaller limits can still be used during development or testing.
+
 ### Argos model strategy
 
 The translation stage installs the required Argos language models on first use and stores them locally inside the project workspace.
@@ -247,3 +257,46 @@ Reason:
 - It separates digest-facing output from raw ingest storage.
 - It prepares the pipeline for the next milestone, where numbered daily digest messages will be assembled.
 - It gives a clean inspection point for short summaries without opening the full raw snapshot.
+
+### Digest display language
+
+Milestone 5 uses a configurable digest display language and falls back to Danish source text if a translation is missing.
+
+Default:
+
+- `DIGEST_LANGUAGE=en`
+
+Reason:
+
+- The user should be able to read the daily digest without reading Danish.
+- A fallback to source text prevents missing entries when translation is unavailable.
+- This keeps the digest usable before Telegram interaction is implemented.
+
+### Daily digest batching strategy
+
+The numbered digest is split into fixed-size batches for later Telegram delivery.
+
+Default:
+
+- `DIGEST_BATCH_SIZE=10`
+
+Reason:
+
+- Long one-message story lists are hard to scan.
+- Telegram delivery will need chunked output for larger daily story counts.
+- Fixed-size batching is simple, deterministic, and easy to test.
+
+### Daily digest menu artifact
+
+Milestone 5 writes a menu artifact with numbered entries and per-batch rendered text.
+
+Files:
+
+- `<timestamp>.menu.json`
+- `<timestamp>.menu/01.txt`, `02.txt`, ...
+
+Reason:
+
+- The JSON artifact preserves the number-to-story mapping for later reply lookup.
+- The text files give a ready-to-send representation for Telegram delivery.
+- Keeping both formats makes later interaction work simpler.

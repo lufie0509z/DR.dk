@@ -124,3 +124,6 @@ class IngestArtifacts:
     article_html_dir: str | None = None
     article_html_count: int = 0
     short_digest_path: str | None = None
+    menu_json_path: str | None = None
+    menu_batch_dir: str | None = None
+    menu_batch_count: int = 0

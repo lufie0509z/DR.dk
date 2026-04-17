@@ -91,8 +91,10 @@ def translate_feed_snapshot(
     argos_package, argos_translate = load_argos_modules()
     ensure_language_pairs(argos_package, configured_packages_dir)
 
+    effective_limit = len(snapshot.items) if translation_limit <= 0 else min(translation_limit, len(snapshot.items))
+
     translated_count = 0
-    for item in snapshot.items[: max(0, translation_limit)]:
+    for item in snapshot.items[:effective_limit]:
         try:
             translations = translate_item(item, argos_translate)
         except Exception:

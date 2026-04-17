@@ -41,6 +41,9 @@ class CliTests(unittest.TestCase):
                 self.assertTrue(Path(output["feed_xml_path"]).exists())
                 self.assertTrue(Path(output["items_json_path"]).exists())
                 self.assertTrue(Path(output["short_digest_path"]).exists())
+                self.assertTrue(Path(output["menu_json_path"]).exists())
+                self.assertTrue(Path(output["menu_batch_dir"]).exists())
+                self.assertEqual(output["menu_batch_count"], 1)
             finally:
                 if previous_raw_dir is None:
                     os.environ.pop("RAW_STORAGE_DIR", None)

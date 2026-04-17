@@ -107,6 +107,45 @@ class ArgosTranslateTests(unittest.TestCase):
         self.assertEqual(snapshot.items[0].translations.en.title, "en:Overskrift")
         mock_ensure_language_pairs.assert_called_once()
 
+    @patch("dr_digest.translate.argos_translate.ensure_language_pairs")
+    @patch("dr_digest.translate.argos_translate.load_argos_modules")
+    def test_translate_feed_snapshot_zero_limit_means_all_items(
+        self,
+        mock_load_argos_modules,
+        mock_ensure_language_pairs,
+    ) -> None:
+        mock_load_argos_modules.return_value = (object(), FakeArgosTranslate())
+        snapshot = FeedSnapshot(
+            source_name="dr",
+            source_url="https://www.dr.dk/nyheder/service/feeds/senestenyt",
+            channel_title="Kort nyt | DR",
+            channel_description="Nyheder fra sektionen Kort nyt",
+            fetched_at=datetime(2026, 4, 14, 13, 5, tzinfo=timezone.utc),
+            items=[
+                NewsItem(
+                    title="Overskrift 1",
+                    link="https://www.dr.dk/nyheder/example-1",
+                    guid="urn:example:1",
+                ),
+                NewsItem(
+                    title="Overskrift 2",
+                    link="https://www.dr.dk/nyheder/example-2",
+                    guid="urn:example:2",
+                ),
+            ],
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            translated_count = translate_feed_snapshot(
+                snapshot,
+                packages_dir=Path(temp_dir) / "argos" / "packages",
+                translation_limit=0,
+            )
+
+        self.assertEqual(translated_count, 2)
+        self.assertEqual(snapshot.items[0].translations.en.title, "en:Overskrift 1")
+        self.assertEqual(snapshot.items[1].translations.en.title, "en:Overskrift 2")
+
 
 if __name__ == "__main__":
     unittest.main()

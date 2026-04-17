@@ -29,6 +29,8 @@ class Settings:
     dr_translation_count: int
     raw_storage_dir: Path
     digest_storage_dir: Path
+    digest_language: str
+    digest_batch_size: int
     argos_packages_dir: Path
 
     @classmethod
@@ -43,9 +45,11 @@ class Settings:
             http_timeout_seconds=int(os.getenv("HTTP_TIMEOUT_SECONDS", "20")),
             dr_max_items=int(os.getenv("DR_MAX_ITEMS", "25")),
             dr_article_fetch_count=int(os.getenv("DR_ARTICLE_FETCH_COUNT", "5")),
-            dr_translation_count=int(os.getenv("DR_TRANSLATION_COUNT", "5")),
+            dr_translation_count=int(os.getenv("DR_TRANSLATION_COUNT", "0")),
             raw_storage_dir=raw_storage_dir,
             digest_storage_dir=digest_storage_dir,
+            digest_language=os.getenv("DIGEST_LANGUAGE", "en").strip().lower(),
+            digest_batch_size=int(os.getenv("DIGEST_BATCH_SIZE", "10")),
             argos_packages_dir=Path(os.getenv("ARGOS_PACKAGES_DIR", "var/argos/packages")),
         )
 
