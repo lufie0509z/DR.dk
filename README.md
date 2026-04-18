@@ -17,6 +17,7 @@ The earlier prototype code has been removed. The repository is now intentionally
 - [Milestone 4 summary](docs/MILESTONE_04_SHORT_SUMMARIES.md)
 - [Milestone 5 summary](docs/MILESTONE_05_DAILY_DIGEST_ASSEMBLY.md)
 - [Milestone 6 summary](docs/MILESTONE_06_INTERACTIVE_DETAIL_LOOKUP.md)
+- [Milestone 7 summary](docs/MILESTONE_07_TELEGRAM_INTERACTION_LAYER.md)
 
 ## Working rule
 
@@ -24,7 +25,7 @@ Important decisions and structural changes should be recorded in markdown under 
 
 ## Current implementation status
 
-Milestone 1, Milestone 2, Milestone 3, Milestone 4, and Milestone 5 are now implemented:
+Milestone 1, Milestone 2, Milestone 3, Milestone 4, Milestone 5, Milestone 6, and Milestone 7 are now implemented:
 
 - `dr-digest ingest-dr` fetches DR's RSS feed.
 - The raw XML is saved under `var/raw/dr/YYYY-MM-DD/`.
@@ -33,6 +34,7 @@ Milestone 1, Milestone 2, Milestone 3, Milestone 4, and Milestone 5 are now impl
 - Optional translation adds English and Chinese translations to each saved item with Argos Translate.
 - The pipeline now generates one-sentence short summaries for all stories and writes a digest-oriented artifact under `var/digests/`.
 - The pipeline now assembles a numbered daily digest menu and writes batch-ready menu files for later Telegram delivery.
+- The project can now send digest batches to Telegram and answer numeric replies with the matching detail response.
 
 The next product direction is an interactive digest:
 

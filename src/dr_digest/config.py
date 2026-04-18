@@ -29,9 +29,13 @@ class Settings:
     dr_translation_count: int
     raw_storage_dir: Path
     digest_storage_dir: Path
+    state_storage_dir: Path
     digest_language: str
     digest_batch_size: int
     argos_packages_dir: Path
+    telegram_bot_token: str | None
+    telegram_chat_id: str | None
+    telegram_poll_timeout: int
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -39,6 +43,7 @@ class Settings:
         load_dotenv(project_root / ".env")
         raw_storage_dir = Path(os.getenv("RAW_STORAGE_DIR", "var/raw"))
         digest_storage_dir = Path(os.getenv("DIGEST_STORAGE_DIR", "var/digests"))
+        state_storage_dir = Path(os.getenv("STATE_STORAGE_DIR", "var/state"))
         return cls(
             project_root=project_root,
             dr_feed_url=os.getenv("DR_FEED_URL", "https://www.dr.dk/nyheder/service/feeds/senestenyt"),
@@ -48,9 +53,13 @@ class Settings:
             dr_translation_count=int(os.getenv("DR_TRANSLATION_COUNT", "0")),
             raw_storage_dir=raw_storage_dir,
             digest_storage_dir=digest_storage_dir,
+            state_storage_dir=state_storage_dir,
             digest_language=os.getenv("DIGEST_LANGUAGE", "en").strip().lower(),
             digest_batch_size=int(os.getenv("DIGEST_BATCH_SIZE", "10")),
             argos_packages_dir=Path(os.getenv("ARGOS_PACKAGES_DIR", "var/argos/packages")),
+            telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN") or None,
+            telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID") or None,
+            telegram_poll_timeout=int(os.getenv("TELEGRAM_POLL_TIMEOUT", "10")),
         )
 
     @property
@@ -70,6 +79,12 @@ class Settings:
         if self.digest_storage_dir.is_absolute():
             return self.digest_storage_dir
         return self.project_root / self.digest_storage_dir
+
+    @property
+    def resolved_state_storage_dir(self) -> Path:
+        if self.state_storage_dir.is_absolute():
+            return self.state_storage_dir
+        return self.project_root / self.state_storage_dir
 
     def with_overrides(
         self,

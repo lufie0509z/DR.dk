@@ -335,3 +335,33 @@ Reason:
 - The JSON file preserves structured data for future programmatic use.
 - The text file gives a ready-to-send response body for Telegram delivery.
 - Writing both formats keeps the future publish layer simple.
+
+### Telegram integration strategy
+
+Milestone 7 uses the official Telegram Bot API over HTTPS for sending digest messages and polling for replies.
+
+Reason:
+
+- It is the official, supported integration path for Telegram bots.
+- It fits the current CLI-first development workflow.
+- It avoids introducing a server requirement before automation is implemented.
+
+### Reply handling mode
+
+The first Telegram interaction implementation uses a poll-once command instead of a long-running worker or webhook.
+
+Reason:
+
+- It is simpler to test and reason about.
+- It keeps milestone 7 small and usable without requiring deployment infrastructure.
+- It can later be wrapped by automation in the next milestone.
+
+### Telegram state source
+
+Telegram interaction stores active menu state and last processed update ID locally in `var/state/telegram_state.json`.
+
+Reason:
+
+- Numeric replies must be mapped back to the exact digest menu that was sent.
+- The last processed update ID prevents duplicate reply handling across poll runs.
+- Local JSON state is sufficient for the current single-user workflow.

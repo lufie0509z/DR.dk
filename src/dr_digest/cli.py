@@ -10,7 +10,9 @@ from .digest import apply_short_summaries, build_daily_digest
 from .digest.lookup import load_menu_payload, resolve_entry_by_number
 from .ingest import enrich_feed_snapshot
 from .ingest.dr_rss import fetch_dr_feed_snapshot
+from .publish import get_updates, send_message, send_text_batches
 from .storage.files import write_daily_digest_menu, write_detail_artifact, write_feed_snapshot, write_short_digest
+from .storage.state import load_state, save_state
 from .summarize import build_detail_payload, render_detail_text
 from .translate import translate_feed_snapshot
 
@@ -56,6 +58,19 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["da", "en", "zh"],
         help="Override the output language. Defaults to the menu language.",
     )
+
+    send_digest_parser = subparsers.add_parser("telegram-send-digest", help="Send a stored digest menu to Telegram.")
+    send_digest_parser.add_argument("--menu-json", required=True, help="Path to the stored menu JSON artifact.")
+    send_digest_parser.add_argument("--chat-id", help="Override the Telegram chat ID.")
+
+    send_detail_parser = subparsers.add_parser("telegram-send-detail", help="Send a specific detail item to Telegram.")
+    send_detail_parser.add_argument("--menu-json", required=True, help="Path to the stored menu JSON artifact.")
+    send_detail_parser.add_argument("--number", type=int, required=True, help="Digest item number to resolve.")
+    send_detail_parser.add_argument("--language", choices=["da", "en", "zh"], help="Output language.")
+    send_detail_parser.add_argument("--chat-id", help="Override the Telegram chat ID.")
+
+    poll_parser = subparsers.add_parser("telegram-poll-once", help="Poll Telegram once and respond to numeric replies.")
+    poll_parser.add_argument("--language", choices=["da", "en", "zh"], help="Override output language for replies.")
     return parser
 
 
@@ -180,6 +195,148 @@ def run_detail(args: argparse.Namespace) -> int:
     return 0
 
 
+def _resolve_telegram_credentials(settings: Settings, chat_id_override: str | None) -> tuple[str, str]:
+    if not settings.telegram_bot_token:
+        raise SystemExit("TELEGRAM_BOT_TOKEN is required for Telegram commands.")
+    chat_id = chat_id_override or settings.telegram_chat_id
+    if not chat_id:
+        raise SystemExit("TELEGRAM_CHAT_ID is required for Telegram commands unless --chat-id is provided.")
+    return settings.telegram_bot_token, chat_id
+
+
+def _build_detail_from_menu(menu_json_path: Path, number: int, language: str | None, settings: Settings) -> tuple[dict[str, object], str]:
+    menu_payload = load_menu_payload(menu_json_path)
+    entry = resolve_entry_by_number(menu_payload, number)
+    output_language = language or str(menu_payload.get("display_language") or settings.digest_language)
+    fetched_at_text = str(menu_payload["fetched_at"])
+    detail_payload = build_detail_payload(
+        entry,
+        language=output_language,
+        fetched_at=fetched_at_text,
+    )
+    detail_text = render_detail_text(detail_payload)
+    fetched_at = datetime.fromisoformat(fetched_at_text)
+    detail_json_path, detail_text_path = write_detail_artifact(
+        detail_payload,
+        detail_text,
+        base_dir=settings.resolved_digest_storage_dir,
+        source_name=str(menu_payload["source_name"]),
+        fetched_at=fetched_at,
+    )
+    detail_payload["detail_json_path"] = detail_json_path
+    detail_payload["detail_text_path"] = detail_text_path
+    return detail_payload, detail_text
+
+
+def run_telegram_send_digest(args: argparse.Namespace) -> int:
+    settings = Settings.from_env()
+    bot_token, chat_id = _resolve_telegram_credentials(settings, args.chat_id)
+    menu_json_path = Path(args.menu_json)
+    menu_payload = load_menu_payload(menu_json_path)
+    menu_batch_dir = menu_json_path.with_suffix("").with_suffix(".menu")
+    messages = send_text_batches(bot_token, chat_id, menu_batch_dir)
+
+    state_payload = load_state(settings.resolved_state_storage_dir)
+    state_payload.update(
+        {
+            "active_menu_json_path": str(menu_json_path),
+            "active_chat_id": chat_id,
+            "display_language": menu_payload.get("display_language"),
+            "last_sent_batch_count": len(messages),
+        }
+    )
+    state_path = save_state(settings.resolved_state_storage_dir, state_payload)
+    print(
+        json.dumps(
+            {
+                "menu_json_path": str(menu_json_path),
+                "chat_id": chat_id,
+                "sent_message_count": len(messages),
+                "state_path": str(state_path),
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+    return 0
+
+
+def run_telegram_send_detail(args: argparse.Namespace) -> int:
+    settings = Settings.from_env()
+    bot_token, chat_id = _resolve_telegram_credentials(settings, args.chat_id)
+    detail_payload, detail_text = _build_detail_from_menu(Path(args.menu_json), args.number, args.language, settings)
+    message = send_message(bot_token, chat_id, detail_text)
+    print(
+        json.dumps(
+            {
+                "number": detail_payload["number"],
+                "chat_id": chat_id,
+                "detail_json_path": detail_payload["detail_json_path"],
+                "detail_text_path": detail_payload["detail_text_path"],
+                "message_id": message.get("message_id"),
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+    return 0
+
+
+def run_telegram_poll_once(args: argparse.Namespace) -> int:
+    settings = Settings.from_env()
+    if not settings.telegram_bot_token:
+        raise SystemExit("TELEGRAM_BOT_TOKEN is required for Telegram commands.")
+    state_payload = load_state(settings.resolved_state_storage_dir)
+    active_menu_json_path = state_payload.get("active_menu_json_path")
+    active_chat_id = state_payload.get("active_chat_id")
+    if not active_menu_json_path or not active_chat_id:
+        raise SystemExit("No active Telegram digest state found. Send a digest first.")
+
+    last_update_id = state_payload.get("last_update_id")
+    offset = int(last_update_id) + 1 if last_update_id is not None else None
+    updates = get_updates(
+        settings.telegram_bot_token,
+        offset=offset,
+        timeout=settings.telegram_poll_timeout,
+        allowed_updates=["message"],
+    )
+
+    handled_numbers: list[int] = []
+    for update in updates:
+        update_id = int(update["update_id"])
+        state_payload["last_update_id"] = update_id
+        message = update.get("message") or {}
+        chat = message.get("chat") or {}
+        text = str(message.get("text") or "").strip()
+        if str(chat.get("id")) != str(active_chat_id):
+            continue
+        if not text.isdigit():
+            continue
+        number = int(text)
+        detail_payload, detail_text = _build_detail_from_menu(
+            Path(str(active_menu_json_path)),
+            number,
+            args.language,
+            settings,
+        )
+        send_message(settings.telegram_bot_token, str(active_chat_id), detail_text)
+        handled_numbers.append(number)
+
+    state_path = save_state(settings.resolved_state_storage_dir, state_payload)
+    print(
+        json.dumps(
+            {
+                "updates_seen": len(updates),
+                "handled_numbers": handled_numbers,
+                "state_path": str(state_path),
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -187,5 +344,11 @@ def main(argv: list[str] | None = None) -> int:
         return run_ingest_dr(args)
     if args.command == "detail":
         return run_detail(args)
+    if args.command == "telegram-send-digest":
+        return run_telegram_send_digest(args)
+    if args.command == "telegram-send-detail":
+        return run_telegram_send_detail(args)
+    if args.command == "telegram-poll-once":
+        return run_telegram_poll_once(args)
     parser.error(f"Unsupported command: {args.command}")
     return 2
